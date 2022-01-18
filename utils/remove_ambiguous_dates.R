@@ -1,16 +1,22 @@
+rm(list = ls())
 setwd("../Desktop/git_repos/ditto/")
 require(tidyverse)
 require(data.table)
 require(ape)
 require(lubridate)
-
-prefix <- "mink.Netherlands.n3750"
-prefixes <- c("mink.Netherlands.n3750", "mink.Denmark.n10512", "mink.USA.n35777")
+human_background <- "V1"
+meta_dir <- "data/metadata/human_animal_subsets"
+aln_dir <- "data/alignments/human_animal_subsets"
+prefixes <- list.files(paste0(meta_dir, "/", human_background))
+prefixes <- prefixes[!grepl("accessions|dates", prefixes)]
+prefixes <- gsub(".csv", "", prefixes)
+prefixes
+# prefixes <- c("mink.Netherlands.n3750", "mink.Denmark.n10512", "mink.USA.n35777")
 
 # Remove ambiguous dates
 for (prefix in prefixes) {
-  meta <- fread(str_glue("data/metadata/human_animal_subsets/{prefix}.csv"))
-  aln <- read.FASTA(str_glue("data/alignments/human_animal_subsets/{prefix}.audacity_only.v8_masked.aln.fasta"))
+  meta <- fread(str_glue("{meta_dir}/{human_background}/{prefix}.csv"))
+  aln <- read.FASTA(str_glue("{aln_dir}/{human_background}/{prefix}.audacity_only.v8_masked.fasta"))
   
   # Remove ambiguous dates
   meta_filt <- meta %>%
@@ -20,13 +26,13 @@ for (prefix in prefixes) {
   aln_filt <- aln[names(aln) %in% meta_filt$accession_id]
   
   write.FASTA(aln_filt, 
-              str_glue("data/alignments/human_animal_subsets/{prefix}.audacity_only.v8_masked.aln.unambiguous.fasta"))
+              str_glue("{aln_dir}/{human_background}/{prefix}.audacity_only.v8_masked.unambiguous.fasta"))
 }
 
 # Filter metadata
 for (prefix in prefixes) {
-  meta <- fread(str_glue("data/metadata/human_animal_subsets/{prefix}.csv"))
-  aln <- read.FASTA(str_glue("data/alignments/human_animal_subsets/{prefix}.audacity_only.v8_masked.aln.unambiguous.dedup.fasta"))
+  meta <- fread(str_glue("{meta_dir}/{human_background}/{prefix}.csv"))
+  aln <- read.FASTA(str_glue("{aln_dir}/{human_background}/{prefix}.audacity_only.v8_masked.unambiguous.dedup.fasta"))
   
   meta_filt <- meta %>%
     filter(accession_id %in% names(aln))
@@ -35,7 +41,7 @@ for (prefix in prefixes) {
     rename(accession = accession_id) %>%
     select(accession, collection_date)
   
-  fwrite(meta_filt, str_glue("data/metadata/human_animal_subsets/{prefix}.unambiguous.dedup.csv"))
-  fwrite(dates, str_glue("data/metadata/human_animal_subsets/{prefix}.unambiguous.dedup.dates_only.csv"))
+  fwrite(meta_filt, str_glue("{meta_dir}/{human_background}/{prefix}.unambiguous.dedup.csv"))
+  fwrite(dates, str_glue("{meta_dir}/{human_background}/{prefix}.unambiguous.dedup.dates_only.csv"))
 }
 

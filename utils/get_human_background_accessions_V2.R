@@ -5,13 +5,14 @@ require(data.table)
 require(tidyverse)
 require(foreach)
 require(doParallel)
+require(lubridate)
 registerDoParallel(cores=8)
 
-host_species <- "Neovison vison"
-host_name <- "mink"
+# host_species <- "Neovison vison"
+# host_name <- "mink"
 
-# host_species <- "Odocoileus virginianus"
-# host_name <- "deer"
+host_species <- "Odocoileus virginianus"
+host_name <- "deer"
 
 # Load metadata
 audacity <- fread("data/GISAID-hCoV-19-phylogeny-2021-11-16/metadata.csv")
@@ -55,6 +56,11 @@ for (country in countries) {
     filter(collection_date >= min(animal$collection_date) & 
              collection_date <= max(animal$collection_date))
   
+  if (nrow(human) > 11000) {
+    human <- human %>%
+      sample_n(10000)
+  }
+  
   human_animal <- human %>% 
     bind_rows(animal)
   
@@ -67,13 +73,13 @@ for (country in countries) {
   country_name <- strsplit(country, " / ")[[1]][2]
   
   fwrite(human_animal,
-         str_glue("data/metadata/human_animal_subsets/{host_name}.{country_name}.n{nrow(accessions)}.csv"))
+         str_glue("data/metadata/human_animal_subsets/V2/{host_name}.{country_name}.n{nrow(accessions)}.csv"))
 
   fwrite(dates,
-         str_glue("data/metadata/human_animal_subsets/{host_name}.{country_name}.n{nrow(accessions)}.dates_only.csv"))
+         str_glue("data/metadata/human_animal_subsets/V2/{host_name}.{country_name}.n{nrow(accessions)}.dates_only.csv"))
 
   fwrite(accessions,
-         str_glue("data/metadata/human_animal_subsets/{host_name}.{country_name}.n{nrow(accessions)}.accessions_only.csv"))
+         str_glue("data/metadata/human_animal_subsets/V2/{host_name}.{country_name}.n{nrow(accessions)}.accessions_only.csv"))
 }
 
 

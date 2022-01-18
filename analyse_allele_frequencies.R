@@ -1,3 +1,4 @@
+rm(list = ls())
 setwd("../Desktop/git_repos/ditto/")
 require(tidyverse)
 require(data.table)
@@ -5,18 +6,19 @@ require(ape)
 require(ggplot2)
 require(foreach)
 require(doParallel)
-registerDoParallel(cores=8)
+registerDoParallel(cores = 10)
 
 # prefixes <- c("deer.USA.n6670")
 # host_name <- "Odocoileus virginianus"
 # save_name <- "deer"
+
 prefixes <- c("mink.Netherlands.n2213", "mink.Denmark.n3219", "mink.USA.n6726")
 host_name <- "Neovison vison"
 save_name <- "mink"
 min_freq_change <- 0.1
-prefix <- prefixes[1]
+# prefix <- prefixes[1]
 morsels <- foreach(prefix = prefixes) %do% {
-  aln <- read.dna(str_glue("data/alignments/human_animal_subsets/V1/{prefix}.audacity_only.v8_masked.aln.fasta"),
+  aln <- read.dna(str_glue("data/alignments/human_animal_subsets/V5/{prefix}.audacity_only.v8_masked.aln.fasta"),
                   format = "fasta",
                   as.matrix = T)
   
@@ -37,7 +39,7 @@ morsels <- foreach(prefix = prefixes) %do% {
     rename(Accession = accession_id) %>%
     as_tibble()
   
-  full_meta <- tibble(Accession = aln_names) %>%
+  full_meta <- tibble(Accession = rownames(aln)) %>%
     left_join(meta) %>%
     mutate(collection_date = ifelse(Accession == "NC_045512.2", "2019-12-26", collection_date)) %>%
     mutate(host = ifelse(Accession == "NC_045512.2", "Human", host))
@@ -155,5 +157,5 @@ all_df %>%
   geom_vline(xintercept = v_df$x_int + 0.5, lty = "dotted") +
   scale_fill_gradient(low = "green", high = "red")
 
-ggsave(str_glue("results/human_animal_subsets/{save_name}.allele_frequency_changes.png"), dpi = 600, height = 5, width = 8)
+ggsave(str_glue("results/human_animal_subsets/allele_frequency/{save_name}.allele_frequency_by_country.png"), dpi = 600, height = 6, width = 14)
 

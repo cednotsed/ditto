@@ -4,7 +4,7 @@ from Bio import AlignIO, SeqIO, Seq
 from pathlib import Path
 from dataclasses import dataclass
 from typing import List
-cwd = Path('/mnt/c/Users/Cedric/Desktop/git_repos/ditto')  # Edit paths as appropriate
+cwd = Path.cwd()  # Edit paths as appropriate
 
 # Load reference
 ref = SeqIO.read(cwd / 'data/genomes/Wuhan-Hu-1_NC_045512.2.fasta', format='fasta')
@@ -22,7 +22,14 @@ def get_protein(nuc_start, nuc_end):
 
 # Convert gene annotation positions to per position dataframe
 final_df = pd.DataFrame()
+
+# For parsing ORF1ab codons
+orf1ab = meta.loc[np.logical_and(meta.region == 'ORF1ab', meta.region_type == 'coding'), 'protein_name']
+orf1b = ['NSP12a (part 2)', 'NSP13', 'NSP14', 'NSP15a', 'NSP16']
+orf1a = list(set(orf1ab) - set(orf1b))
 orf1ab_length = 0
+orf1a_length = 0
+orf1b_length = 4401
 
 for i in range(len(meta)):
     row = meta.iloc[i:i + 1, :]
@@ -60,36 +67,57 @@ for i in range(len(meta)):
                                 value=[AA for AA in list(protein_sequence) for _ in range(3)])
 
     elif region_type == 'non-coding':
-        for col in ['pos_in_codon', 'codon_number', 'ref_AA']:
+        for col in ['pos_in_codon', 'codon_number', 'codon_from_gene_start', 'ref_AA']:
             exploded_element.insert(loc=3,
                                     column=col,
                                     value=-1)
     else:
         raise TypeError('Did you add a new region_type?')
 
-    # Add codon position with ORF1ab in continuous codon sequence
-    if region_type == 'coding' and region == 'ORF1ab':
-        if protein_name != 'NSP12a (part 2)':
+    # Non-continuous codon number from start of each protein
+    if region_type == 'coding':
+        if protein_name == 'NSP12a (part 2)' and region == 'ORF1ab':
             exploded_element.insert(loc=3,
                                     column='codon_number',
-                                    value=[pos for pos in np.arange(protein_length) + 1 + orf1ab_length
-                                           for _ in range(3)])
-        # Account for -1 frameshift
+                                    value=[pos for pos in np.arange(protein_length) + 1 + 9 for _ in range(3)])
         else:
             exploded_element.insert(loc=3,
                                     column='codon_number',
-                                    value=[pos for pos in np.arange(protein_length) + 1 + 9 + orf1ab_length
+                                    value=[pos for pos in np.arange(protein_length) + 1 for _ in range(3)])
+    else:
+        print(region_type, region, protein_name)
+
+    # Add codon position with ORF1ab in continuous codon sequence accounting for -1 frameshift
+    codon_start = 0
+
+    if region_type == 'coding' and region == 'ORF1ab':
+        # ORF1a
+        if protein_name in orf1a:
+            exploded_element.insert(loc=3,
+                                    column='codon_from_gene_start',
+                                    value=[pos for pos in np.arange(protein_length) + 1 + orf1a_length
                                            for _ in range(3)])
 
-        orf1ab_length += protein_length
+            if protein_name != "NSP11":
+                orf1a_length += protein_length
+
+        # Account for -1 frameshift
+        elif protein_name in orf1b:
+            exploded_element.insert(loc=3,
+                                    column='codon_from_gene_start',
+                                    value=[pos for pos in np.arange(protein_length) + 1 + orf1b_length
+                                           for _ in range(3)])
+
+            orf1b_length += protein_length
+
+        else:
+            raise RuntimeError('error in ORF1ab continuous codon number!')
 
     elif region_type == 'coding' and region != 'ORF1ab':
         exploded_element.insert(loc=3,
-                                column='codon_number',
-                                value=[pos for pos in np.arange(protein_length) + 1 for _ in range(3)])
-
-    else:
-        print(region_type, region, protein_name)
+                                column='codon_from_gene_start',
+                                value=[pos for pos in np.arange(protein_length) + 1
+                                       for _ in range(3)])
 
     # Make dataframes for each possible nuc substitution
     df_list = [exploded_element.copy() for _ in range(4)]
@@ -131,7 +159,7 @@ final_df.loc[final_df.loc[:, 'ref_AA'] == final_df.loc[:, 'var_AA'], 'mutation_t
 final_df.loc[final_df.loc[:, 'ref_AA'] != final_df.loc[:, 'var_AA'], 'mutation_type'] = 'NS'
 
 # Save
-final_df.to_csv(cwd / 'data/metadata/SARS-CoV-2_hookup_table_V2.csv', index=False)
+final_df.to_csv(cwd / 'data/metadata/SARS-CoV-2_hookup_table_V3.csv', index=False)
 
 
 

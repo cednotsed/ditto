@@ -4,9 +4,9 @@ require(data.table)
 require(seqinr)
 require(foreach)
 
-result_dir <- "results/homoplasy_out/"
-result_dir <- "results/mini_animal_trees/homoplasy_out"
-hookup <- fread("data/metadata/SARS-CoV-2_hookup_table_V2.csv") %>% as_tibble()
+result_dir <- "results/all_animals/homoplasy_out"
+# result_dir <- "results/mini_animal_trees/homoplasy_out"
+hookup <- fread("data/metadata/SARS-CoV-2_hookup_table_V3.csv") %>% as_tibble()
 to_remove <- c("coronavirus frameshifting stimulation element stem-loop 1 (NSP12a)",
                "coronavirus frameshifting stimulation element stem-loop 2 (NSP12a)", 
                "3'UTR (pseudoknot stem-loop 1)", "3'UTR (pseudoknot stem-loop 2)",
@@ -22,9 +22,10 @@ hookup_unique <- hookup %>%
 
 nuc_count_cols <- c("nA", "nC", "nG", "nT")
 prefixes <- list.files(result_dir)
+prefixes <- prefixes[!grepl("csv", prefixes)]
 
 for (prefix in prefixes) {
-  df <- fread(str_glue("{result_dir}/{prefix}/consistencyIndexReport_02-12-21.txt")) %>%
+  df <- fread(str_glue("{result_dir}/{prefix}/consistencyIndexReport_21-11-21.txt")) %>%
     as_tibble()
   
   if(nrow(df) > 0) {
@@ -58,7 +59,7 @@ for (prefix in prefixes) {
     parsed_df <- bind_rows(morsels) %>%
       left_join(hookup, by = c("nucleotide_pos", "ref_nuc", "var_nuc"))
     
-    fwrite(parsed_df, str_glue("{result_dir}/{prefix}/{prefix}_homoplasies.csv"))
+    fwrite(parsed_df, str_glue("{result_dir}/{prefix}_homoplasies.csv"))
   } else {
     fwrite(tibble(), str_glue("{result_dir}/{prefix}/{prefix}_homoplasies.csv"))
   }
