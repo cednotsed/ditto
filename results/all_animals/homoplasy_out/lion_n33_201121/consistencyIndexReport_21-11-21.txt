@@ -1,0 +1,2 @@
+Position	ConsistencyIndex	CountsACGT	MinimumNumberChangesOnTree
+27507	0.5	32:2:0:0	2
