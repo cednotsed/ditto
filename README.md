@@ -1,5 +1,5 @@
 # Transmission of SARS-CoV-2 from humans to animals and potential host adaptation
-Authors: Cedric C.S. Tan, Su Datt Lam, Damien Richard, Christopher Owen, Dorothea Berchtold, Christine Orengo, Suresh V. Kuchipudi, Meera Surendran Nair, Vivek Kapur, Lucy van Dorp, François Balloux
+*Authors: Cedric C.S. Tan, Su Datt Lam, Damien Richard, Christopher Owen, Dorothea Berchtold, Christine Orengo, Suresh V. Kuchipudi, Meera Surendran Nair, Vivek Kapur, Lucy van Dorp, François Balloux*
 
 Investigating patterns of SARS-CoV-2 host adaptation following human-to-animal transmission.
 
