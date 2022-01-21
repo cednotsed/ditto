@@ -9,7 +9,7 @@ require(ggtreeExtra)
 # Load Audacity tree
 audacity_tree <- read.tree("data/GISAID-hCoV-19-phylogeny-2021-11-16/global.tree")
 
-# Human mink deer accessions
+# All human and animal accessions
 meta <- fread("data/metadata/human_animal_subsets/V6/all_animals.n16811.csv")
 
 # Cluster meta
