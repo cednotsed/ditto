@@ -20,6 +20,8 @@ meta_filt <- meta %>%
   filter(grepl("Neovison|Odocoileus|Felis|Canis|Panthera|Human", host)) %>%
   mutate(host = ifelse(grepl("Panthera", host), "Panthera spp.", host))
 
+fwrite(meta_filt, "data/metadata/all_metadata_files/animal_human_n15846.csv")
+
 # Subset tree
 to_drop <- audacity_tree$tip.label[!(audacity_tree$tip.label %in% meta_filt$accession_id)]
 # to_drop <- to_drop[to_drop != "EPI_ISL_402124"]
@@ -47,7 +49,7 @@ meta_df <- data.frame(Accession = meta.match$accession_id,
 # Plot tree
 p <- ggtree(audacity_filt, size = 0.001, color = "darkgrey") %<+% meta_df +
   geom_tippoint(aes(hjust = 0.5, color = host), alpha = 1, size = 3) +
-  scale_color_manual(values = c("#d1495b", "darkgoldenrod3", "#2e4057", "darkorchid4", "cyan4"), 
+  scale_color_manual(values = c("#d1495b", "darkgoldenrod3", "#2e4057", "darkolivegreen4", "cyan4"), 
                      na.value = NA,
                      na.translate = F) +
   geom_fruit(geom = geom_tile, 

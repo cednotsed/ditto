@@ -11,11 +11,12 @@ require(ggnewscale)
 # prefix <- "deer.USA.n6670"
 prefix <- "mink.Netherlands.n3750"
 prefix <- "mink.Denmark.n10512"
+prefix <- "all_mink.n1487"
 # prefix <- "mink.USA.n6726"
 animal_name <- str_split(prefix, "\\.")[[1]][1]
-meta <- fread(str_glue("data/metadata/human_animal_subsets/{prefix}.unambiguous.dedup.csv"))
+meta <- fread(str_glue("data/metadata/human_animal_subsets/V5/{prefix}.unambiguous.dedup.csv"))
 
-node_meta <- fread(str_glue("results/human_animal_subsets/dating_out/{prefix}.unambiguous.dedup/dates.tsv"),
+node_meta <- fread(str_glue("results/human_animal_subsets/V5/dating_out/{prefix}.unambiguous.dedup/dates.tsv"),
                    skip = 1) %>%
   rename_all(~ tolower(gsub(" ", "_", .))) %>%
   rename(node = "#node") %>%
