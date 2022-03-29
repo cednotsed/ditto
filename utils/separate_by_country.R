@@ -3,8 +3,8 @@ require(ape)
 require(tidyverse)
 require(data.table)
 
-meta <- fread("data/metadata/human_animal_subsets/V5/all_mink.n1487.csv")
-aln <- read.FASTA("data/alignments/human_animal_subsets/V5/all_mink.n1487.audacity_only.v8_masked.fasta")
+meta <- fread("data/metadata/human_animal_subsets/V5/all_mink.n1738.csv")
+aln <- read.FASTA("data/alignments/human_animal_subsets/V5/all_mink.n1738.audacity_only.v8_masked.fasta")
 
 for (loc in unique(meta$location)) {
   meta_filt <- meta %>% 

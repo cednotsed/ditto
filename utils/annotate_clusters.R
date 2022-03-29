@@ -6,16 +6,10 @@ require(ape)
 require(foreach)
 
 # Load metadata
-audacity <- fread("data/GISAID-hCoV-19-phylogeny-2021-11-16/metadata.csv")
-
-all_meta <- fread("data/metadata/all_sequence_metadata_231121.tsv") %>% 
-  rename_all(~ tolower(gsub(" ", "_", .))) %>%
-  filter(accession_id %in% audacity$accession_id) %>%
-  separate(location, into = c("loc1", "loc2", "loc3"), sep = " / ") %>%
-  mutate(location = paste0(loc1, " / ", loc2))
-
-mink_deer <- all_meta %>%
-  filter(host %in% c("Neovison vison", "Odocoileus virginianus")) %>%
+mink <- fread("data/metadata/all_animals/mink_only.n929.csv")
+deer <- fread("data/metadata/all_animals/deer_only.n96.csv")
+mink_deer <- bind_rows(mink, deer) %>%
+  filter(host != "Human") %>%
   mutate(host_name = ifelse(host == "Neovison vison", "mink", "deer"))
 
 cluster_stats <- mink_deer %>%

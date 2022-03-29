@@ -4,13 +4,12 @@ require(tidyverse)
 require(data.table)
 require(ape)
 
-audacity_tree <- read.tree("data/GISAID-hCoV-19-phylogeny-2021-11-16/global.tree")
+audacity_tree <- read.tree("data/GISAID-hCoV-19-phylogeny-2022-02-21/global.tree")
 
-all_meta <- fread("data/metadata/all_sequence_metadata_231121.tsv") %>% 
-  rename_all(~ tolower(gsub(" ", "_", .))) %>%
-  filter(accession_id %in% audacity_tree$tip.label) %>%
-  separate(location, into = c("loc1", "loc2", "loc3"), sep = " / ") %>%
-  mutate(location = paste0(loc1, " / ", loc2))
+mink <- fread("data/metadata/all_animals/mink_only.n929.csv")
+deer <- fread("data/metadata/all_animals/deer_only.n96.csv")
+
+all_meta <- fread("data/metadata/all_sequence_metadata_260322.audacity.parsed.tsv")
 
 cluster_meta <- fread("results/cluster_annotation/deer_mink_raw_clusters.csv")
 
@@ -21,6 +20,9 @@ meta_filt <- all_meta %>%
 date_stats <- meta_filt %>%
   group_by(host) %>%
   summarise(max = max(collection_date, na.rm = T))
+
+ref <- meta_filt %>%
+  filter(accession_id == "EPI_ISL_402124")
 
 for (host_species in c("Neovison vison", "Odocoileus virginianus")) {
   max_date <- date_stats[date_stats$host == host_species, ]$max
@@ -34,6 +36,9 @@ for (host_species in c("Neovison vison", "Odocoileus virginianus")) {
     filter(host %in% c("Human", host_species)) %>%
     filter(collection_date <= max_date) %>%
     filter(loc2 %in% locations)
+  
+  human_animal <- ref %>%
+    bind_rows(human_animal)
   
   # Subset tree
   to_drop <- audacity_tree$tip.label[!(audacity_tree$tip.label %in% human_animal$accession_id)]

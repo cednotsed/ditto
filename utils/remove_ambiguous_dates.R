@@ -4,7 +4,7 @@ require(tidyverse)
 require(data.table)
 require(ape)
 require(lubridate)
-human_background <- "V1"
+human_background <- "V5"
 meta_dir <- "data/metadata/human_animal_subsets"
 aln_dir <- "data/alignments/human_animal_subsets"
 prefixes <- list.files(paste0(meta_dir, "/", human_background))

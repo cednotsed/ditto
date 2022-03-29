@@ -9,4 +9,8 @@ Investigating patterns of SARS-CoV-2 host adaptation following human-to-animal t
 ![Global context of animal SARS-CoV-2 infections](results/annotated_global_tree_all_animals.png)
 
 
+V1: Include countries with more than 10 animal isolates, 10 human isolates per country, PANGO lineage, regardless of time.
+V5: Include countries with more than 10 animal isolates, x human isolates per country, PANGO lineage, with matched dates.
+V6: All animals (n > 10) with 10 human isolates for each of all possible pango lineages. 
+
 
