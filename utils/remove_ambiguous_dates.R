@@ -8,7 +8,7 @@ human_background <- "V5"
 meta_dir <- "data/metadata/human_animal_subsets"
 aln_dir <- "data/alignments/human_animal_subsets"
 prefixes <- list.files(paste0(meta_dir, "/", human_background))
-prefixes <- prefixes[!grepl("accessions|dates", prefixes)]
+prefixes <- prefixes[!grepl("accessions|dates|unamb", prefixes)]
 prefixes <- gsub(".csv", "", prefixes)
 prefixes
 # prefixes <- c("mink.Netherlands.n3750", "mink.Denmark.n10512", "mink.USA.n35777")

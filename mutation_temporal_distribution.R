@@ -8,13 +8,7 @@ require(randomcoloR)
 registerDoParallel(cores = 10)
 
 # Load metadata
-audacity <- fread("data/GISAID-hCoV-19-phylogeny-2021-11-16/metadata.csv")
-meta <- fread("data/metadata/all_sequence_metadata_231121.tsv", nThread = 10) %>%
-  rename_all(~ tolower(gsub(" ", "_", .))) %>%
-  filter(accession_id %in% audacity$accession_id) %>%
-  separate(location, into = c("loc1", "loc2", "loc3"), sep = " / ") %>%
-  mutate(location = paste0(loc1, " / ", loc2)) %>%
-  as_tibble()
+meta <- fread("data/metadata/all_sequence_metadata_260322.audacity.parsed.tsv", nThread = 10)
 
 human <- meta %>% 
   filter(host == "Human")
@@ -22,10 +16,11 @@ human <- meta %>%
 mink <- meta %>%
   filter(host == "Neovison vison")
 
+deer <- meta %>%
+  filter(host == "Odocoileus virginianus")
+
 # Earliest date for mutations
-mut_df <- fread("results/mink_deer_homoplasy_allele_frequency_V5.csv")
-mut_df
-mutation_list <- c("NS3_T229I", "Spike_N501T", "M_I82T",
+mutation_list <- c("Spike_N501T", "M_I82T",
                    "N_D377Y", "NSP3_L1035F",
                    "NSP9_G37E", "NS3_L219V", 
                    "Spike_F486L", "Spike_Y453F"
@@ -42,12 +37,20 @@ colordict <- as.list(distinctColorPalette(length(countries)))
 names(colordict) <- countries
 
 # Get temporal distribution
+set.seed(66)
+
 time_plots <- foreach(mutation = mutation_list) %do% {
+  # mutation <- "NSP3_L1035F"
   date_df <- human %>%
     filter(grepl(mutation, aa_substitutions)) %>%
     mutate(collection_date = as.Date(collection_date, "%Y-%m-%d")) %>%
     filter(!is.na(collection_date))
   
+  # Get countries of isolates before first outbreaks
+  print(date_df %>% 
+    filter(collection_date < min(deer$collection_date, na.rm = T)) %>%
+    group_by(location) %>%
+    summarise(n = n()))
   # # Get first 30 countries
   # to_keep <- unique(date_df$loc2)[1:30]
   # date_df <- date_df %>%
@@ -61,11 +64,11 @@ time_plots <- foreach(mutation = mutation_list) %do% {
     #                           max(date_df$collection_date), 
     #                           "months"),
     #              date_labels = "%b-%y")
-    scale_x_date(breaks = seq(ymd("2020-02-01"), 
-                              ymd("2021-12-01"), 
-                              "2 months"),
-                 limits = c(ymd("2020-02-01"), 
-                            ymd("2021-12-01")),
+    scale_x_date(breaks = seq(ymd("2020-03-01"), 
+                              ymd("2022-03-01"), 
+                              "4 months"),
+                 limits = c(ymd("2020-03-01"), 
+                            ymd("2022-03-01")),
                  date_labels = "%b-%y") +
     theme_bw()
   
@@ -86,26 +89,32 @@ time_plots <- foreach(mutation = mutation_list) %do% {
       scale_color_manual(values = colordict[unique(date_df$loc2)])
   }
   
-  plt
+  if (mutation != "NSP3_L1035F") {
+    plt + geom_vline(xintercept = min(mink$collection_date, na.rm = T),
+                     color = "red", lty = "dashed")
+  } else {
+    plt + geom_vline(xintercept = min(deer$collection_date, na.rm = T),
+                     color = "steelblue4", lty = "dashed")
+  }
 }
 
 combined <- ggpubr::ggarrange(plotlist = time_plots)
-ggsave("results/temporal_distribution_mutations_distinct.png", 
-       combined, 
-       dpi = 100,
-       width = 12, 
-       height = 10)
+# ggsave("results/temporal_distribution_mutations_distinct.png", 
+#        combined, 
+#        dpi = 100,
+#        width = 12, 
+#        height = 10)
 
-combined1 <- ggpubr::ggarrange(plotlist = time_plots[1:5], nrow = 2, ncol = 3)
-combined2 <- ggpubr::ggarrange(plotlist = time_plots[6:9], nrow = 1, ncol = 4)
-ggsave("results/temporal_distribution_mutations_distinct_1.png", 
+combined1 <- ggpubr::ggarrange(plotlist = time_plots[c(1, 4)], nrow = 1, ncol = 2)
+combined2 <- ggpubr::ggarrange(plotlist = time_plots[5:8], nrow = 1, ncol = 4)
+ggsave("results/temporal_distribution/temporal_distribution_mutations_distinct_1.png", 
        combined1, 
        dpi = 300,
-       width = 10, 
-       height = 6)
-ggsave("results/temporal_distribution_mutations_distinct_2.png", 
-       combined2, 
-       dpi = 600,
        width = 13, 
        height = 4)
+# ggsave("results/temporal_distribution/temporal_distribution_mutations_distinct_2.png", 
+#        combined2, 
+#        dpi = 300,
+#        width = 13, 
+#        height = 4)
 

@@ -1,6 +1,7 @@
 threads=10
 #alignment_dir=../data/alignments
-alignment_dir=../data/alignments/human_animal_subsets/V5
+#alignment_dir=../data/alignments/human_animal_subsets/V5
+alignment_dir=../data/alignments/temporal
 #alignment_dir=../data/alignments/all_animals
 #alignment_dir=../data/alignments/mini_animal_trees
 #alignment_dir=../data/alignments/matched

@@ -9,11 +9,9 @@ do
 	echo $output
 
 	iqtree2 \
-		-nt ${threads} \
+		-nt $threads \
 		-s ${input} \
 		-m GTR+G \
 		--prefix ${output} \
-		-B 1000 \
-		-alrt 1000 \
-		-bnni
+		-alrt 1000
 done

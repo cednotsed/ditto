@@ -1,4 +1,5 @@
 alignment_dir=../data/alignments/human_animal_subsets/V5
+alignment_dir=../data/alignments/temporal
 
 for input in ${alignment_dir}/*v8_masked.unambiguous.fasta
 do

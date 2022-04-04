@@ -1,14 +1,18 @@
 aln_path=data/alignments/human_animal_subsets/V5/
+aln_path=data/alignments/temporal
 
-for i in $(ls data/alignments/human_animal_subsets/V5/*.dedup.fasta)
+for aln in $(ls $aln_path/*.dedup.fasta)
 do
-	prefix=$(echo $i|sed "s|$aln_path||g"|sed "s|.audacity_only.v8_masked.unambiguous.dedup.fasta||g")
-	echo $prefix
+	prefix=$(echo $aln|sed "s|$aln_path||g"|sed "s|.audacity_only.v8_masked.unambiguous.dedup.fasta||g")
+	#echo $prefix
 
-	aln_file=data/alignments/human_animal_subsets/V5/${prefix}.audacity_only.v8_masked.unambiguous.dedup.fasta
-	tree_file=data/trees/human_animal_subsets/V5/${prefix}.audacity_only.v8_masked.unambiguous.dedup.tree
-	date_file=data/metadata/human_animal_subsets/V5/${prefix}.unambiguous.dedup.dates_only.csv
-	res_dir=results/human_animal_subsets/V5/dating_out/${prefix}.unambiguous.dedup
+	aln_file=$aln
+	tree_file=$(echo $aln|sed "s|alignments|trees|g"| sed "s|.dedup.fasta|.dedup.tree|g")
+	date_file=$(echo $aln|sed "s|alignments|metadata|g"| sed "s|.dedup.fasta|.dedup.dates_only.csv|g"| sed "s|audacity_only.v8_masked.||g")
+	echo $tree_file
+	echo $date_file
+	echo $aln_file
+	res_dir=results/mutation_rates/${prefix}.unambiguous.dedup
 
 	echo $aln_file
 	echo $tree_file

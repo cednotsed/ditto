@@ -23,15 +23,15 @@ parse <- function(fasta, prefix) {
 # Files
 human_background <- "V5"
 host_name <- "Mink"
-aln_path <- "all_mink.n1487.audacity_only.v8_masked.fasta"
-meta_file <- "all_mink.n1487.csv"
+aln_path <- "all_mink.n1769.audacity_only.v8_masked.fasta"
+meta_file <- "all_mink.n1769.csv"
 host_species <- "Neovison vison"
 
-human_background <- "V5"
-host_name <- "Deer"
-aln_path <- "all_deer.n145.audacity_only.v8_masked.fasta"
-meta_file <- "all_deer.n145.csv"
-host_species <- "Odocoileus virginianus"
+# human_background <- "V5"
+# host_name <- "Deer"
+# aln_path <- "all_deer.n189.audacity_only.v8_masked.fasta"
+# meta_file <- "all_deer.n189.csv"
+# host_species <- "Odocoileus virginianus"
 
 # Load alignment
 aln <- readDNAStringSet(file = str_glue("data/alignments/human_animal_subsets/{human_background}/{aln_path}"))

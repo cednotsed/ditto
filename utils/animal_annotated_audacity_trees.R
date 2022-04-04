@@ -10,35 +10,44 @@ mink <- fread("data/metadata/all_animals/mink_only.n929.csv")
 deer <- fread("data/metadata/all_animals/deer_only.n96.csv")
 
 all_meta <- fread("data/metadata/all_sequence_metadata_260322.audacity.parsed.tsv")
-
 cluster_meta <- fread("results/cluster_annotation/deer_mink_raw_clusters.csv")
 
 meta_filt <- all_meta %>%
+  mutate(collection_date = as.Date(collection_date)) %>%
+  mutate(collection_date = if_else(location == "Europe / Lithuania", 
+                                   as.Date("2020-11-26"), 
+                                   collection_date)) %>%
   left_join(cluster_meta) %>%
   filter(host %in% c("Neovison vison", "Odocoileus virginianus", "Human"))
 
 date_stats <- meta_filt %>%
-  group_by(host) %>%
+  group_by(host, location) %>%
   summarise(max = max(collection_date, na.rm = T))
 
 ref <- meta_filt %>%
   filter(accession_id == "EPI_ISL_402124")
 
 for (host_species in c("Neovison vison", "Odocoileus virginianus")) {
-  max_date <- date_stats[date_stats$host == host_species, ]$max
+  date_stats_filt <-  date_stats %>%
+    filter(host == host_species)
   
   animal_meta <- meta_filt %>%
     filter(host == host_species)
   
-  locations <- unique(animal_meta$loc2)
+  morsels <- foreach (loc = date_stats_filt$location) %do% {
+    max_date <- (date_stats_filt %>% filter(location == loc))$max
+    temp_human <- meta_filt %>%
+      filter(host == "Human") %>%
+      filter(collection_date <= max_date) %>%
+      filter(location == loc)
+    
+    return(temp_human)
+  } 
   
-  human_animal <- meta_filt %>%
-    filter(host %in% c("Human", host_species)) %>%
-    filter(collection_date <= max_date) %>%
-    filter(loc2 %in% locations)
-  
+  human_meta <- bind_rows(morsels)
+
   human_animal <- ref %>%
-    bind_rows(human_animal)
+    bind_rows(animal_meta, human_meta)
   
   # Subset tree
   to_drop <- audacity_tree$tip.label[!(audacity_tree$tip.label %in% human_animal$accession_id)]

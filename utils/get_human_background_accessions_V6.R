@@ -18,7 +18,18 @@ animal_filt <- all_meta %>%
   filter(host %in% hosts)
 
 animal_all <- all_meta %>% 
-  filter(host != "Human")
+  filter(!(host %in% c("Human", "Environment"))) %>%
+  mutate(host = ifelse(grepl("Panthera", host), "Panthera spp.", host))
+
+animal_stats_filt <- animal_all %>%
+  group_by(host) %>%
+  summarise(n = n()) %>%
+  filter(n > 10)
+
+animal_stats
+
+animal_all <- animal_all %>%
+  filter(host %in% animal_stats_filt$host)
 
 # Print no. of isolates per country
 country_stats <- animal_filt %>%

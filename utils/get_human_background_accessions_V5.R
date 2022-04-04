@@ -45,8 +45,8 @@ for (i in seq(length(host_list))) {
     filter(host == host_species) %>%
     group_by(location, pango_lineage) %>%
     summarise(n = n()) %>%
-    left_join(country_stats) %>%
-    filter(n_total > 10)
+    left_join(country_stats)
+    # filter(n_total > 10)
   
   animal_meta_filt <- animal_meta %>%
     filter(location %in% unique(animal_stats$location))

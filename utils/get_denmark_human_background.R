@@ -12,17 +12,9 @@ host_species <- "Neovison vison"
 host_name <- "mink"
 
 # Load metadata
-audacity <- fread("data/GISAID-hCoV-19-phylogeny-2021-11-16/metadata.csv")
-
+all_meta <- fread("data/metadata/all_sequence_metadata_260322.audacity.parsed.tsv")
 cluster_meta <- fread("results/cluster_annotation/deer_mink_parsed_clusters.csv") %>%
   select(accession_id, cluster)
-
-all_meta <- fread("data/metadata/all_sequence_metadata_231121.tsv") %>% 
-  rename_all(~ tolower(gsub(" ", "_", .))) %>%
-  filter(accession_id %in% audacity$accession_id) %>%
-  separate(location, into = c("loc1", "loc2", "loc3"), sep = " / ") %>%
-  mutate(location = paste0(loc1, " / ", loc2)) %>%
-  as_tibble()
 
 all_meta_cluster <- all_meta %>%
   left_join(cluster_meta)

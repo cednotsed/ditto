@@ -33,8 +33,7 @@ country_stats <- animal_meta %>%
                                    ymd("2020-11-26"), 
                                    collection_date)) %>%
   group_by(location) %>% 
-  summarise(n_total = n()) %>%
-  filter(n_total > 10)
+  summarise(n_total = n())
 
 # Get no. of isolates per lineage per country 
 lineage_stats <- human_meta %>%
