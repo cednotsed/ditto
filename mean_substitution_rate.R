@@ -46,7 +46,10 @@ hosts <- c("Human", "Odocoileus virginianus", "Neovison vison")
 plot_df <- bind_rows(morsels) %>%
   mutate(country = ifelse(grepl("n189", country), "USA", country)) %>%
   mutate(country = factor(country, levels = ctys),
-         host = factor(host, levels = hosts))
+         host = factor(host, levels = hosts)) %>%
+  mutate(host = case_when(host == "Odocoileus virginianus" ~ "Deer",
+                          host == "Neovison vison" ~ "Mink",
+                          TRUE ~ "Human"))
 
 # t.test
 tests <- foreach(cty = ctys) %do% {
@@ -81,11 +84,11 @@ plt <- plot_df %>%
                  outlier.shape = NA,
                  alpha = 0.3) +
     geom_violinhalf(position = position_nudge(x = 0.2, y = 0), alpha = 1) +
-    geom_text(aes(x = host, y = 0.003, label = paste0("n = ", n))) +
+    # geom_text(aes(x = host, y = 0.003, label = paste0("n = ", n))) +
     ylim(0.00, 0.007) +
     coord_flip() +
     labs(y = "Mutation rate", x = "Host") +
-    scale_fill_manual(values = c("skyblue3", "darkseagreen3", "tomato3")) +
+    scale_fill_manual(values = c("skyblue3", "darkseagreen3", "mediumpurple3")) +
     theme(legend.position = "none",
           text = element_text(size = 15)) +
     geom_text(aes(label = paste0("p = ", round(pval, 3)), 
@@ -102,7 +105,8 @@ ggsave(str_glue("results/mutation_rates/mutations_rates_terminal.by_country.png"
        height = 8)
 
 ## Plot by host ##
-for(h in hosts) {
+host_names <- c("Mink", "Deer", "Human")
+for(h in host_names) {
   temp <- plot_df %>% 
     filter(!(is.na(terminal_rate)),
            host != h)
@@ -126,10 +130,10 @@ host_plt <- plot_df %>%
                outlier.shape = NA,
                alpha = 0.3) +
   geom_violinhalf(position = position_nudge(x = 0.2, y = 0), alpha = 1) +
-  geom_text(aes(x = host, y = 0.006, label = paste0("n = ", n))) +
+  # geom_text(aes(x = host, y = 0.006, label = paste0("n = ", n))) +
   coord_flip() +
   labs(y = "Mutation rate", x = "Host") +
-  scale_fill_manual(values = c("skyblue3", "darkseagreen3", "tomato3")) +
+  scale_fill_manual(values = c("skyblue3", "darkseagreen3", "mediumpurple3")) +
   theme(legend.position = "none",
         text = element_text(size = 15)) +
   geom_segment(x = 1, xend = 2, y = 0.005, yend = 0.005) +

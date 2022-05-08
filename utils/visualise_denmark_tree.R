@@ -51,9 +51,10 @@ for (i in seq(nrow(mut_df))) {
                    allele = animal_parsed$allele_annot)
   
   # Plot tree
-  p <- ggtree(audacity_filt, aes(color = host)) %<+% dd +
-    geom_tippoint(aes(shape = host)) +
-    labs(shape = "Host", color = "host") +
+  p <- ggtree(audacity_filt, color = "grey61") %<+% dd +
+    geom_tippoint(aes(color = host, shape = host)) +
+    scale_shape_discrete(na.translate = F) +
+    labs(shape = "Host", color = "Host") +
     new_scale_color() +
     geom_fruit(geom = geom_tile, aes(fill = cluster), width=10, offset=0, alpha = 1) +
     scale_fill_jcolors("pal8", na.translate = F) +
@@ -87,7 +88,6 @@ for (i in seq(nrow(mut_df))) {
          plot = p,
          dpi = 600,
          width = 8,
-         height = 10)
   
 }
 
