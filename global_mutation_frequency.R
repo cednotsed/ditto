@@ -7,13 +7,8 @@ require(lubridate)
 registerDoParallel(cores = 10)
 
 # Load metadata
-audacity <- fread("data/GISAID-hCoV-19-phylogeny-2021-11-16/metadata.csv")
-meta <- fread("data/metadata/all_sequence_metadata_231121.tsv", nThread = 10) %>%
-  rename_all(~ tolower(gsub(" ", "_", .))) %>%
-  filter(accession_id %in% audacity$accession_id) %>%
-  separate(location, into = c("loc1", "loc2", "loc3"), sep = " / ") %>%
-  mutate(location = paste0(loc1, " / ", loc2)) %>%
-  as_tibble()
+audacity <- fread("data/GISAID-hCoV-19-phylogeny-2022-02-21/metadata.csv")
+meta <- fread("data/metadata/all_sequence_metadata_260322.audacity.parsed.tsv", nThread = 10)
 
 human <- meta %>% 
   filter(host == "Human")
@@ -31,9 +26,13 @@ human %>%
   summarise(prop = sum(grepl(mutation, aa_substitutions)) / nrow(human))
 
 # Earliest date for mutations
-mut_df <- fread("results/mink_deer_homoplasy_allele_frequency_V5.csv")
+mink_df <- fread("results/allele_frequency/mink_homoplasy_alele_frequency_V5.csv") %>%
+  mutate(host = "mink")
+deer_df <- fread("results/allele_frequency/deer_homoplasy_alele_frequency_V5.csv") %>%
+  mutate(host = "deer")
+mut_df <- bind_rows(mink_df, deer_df)
 mut_df
-mutation_list <- c("NSP9_G37E", "NS3_T229I", "NS3_L219V", 
+mutation_list <- c("NSP9_G37E", "NS3_L219V", 
                    "Spike_F486L", "Spike_N501T", "Spike_Y453F", 
                    "NSP3_L1035F",
                    "N_D377Y", "M_I82T"
@@ -64,44 +63,44 @@ morsels2 <- foreach (i = seq(nrow(time_df))) %do% {
 loc_df <- bind_rows(morsels2)
 time_loc_df <- time_df %>%
   left_join(loc_df)
-fwrite(time_loc_df, "results/mutation_times.csv")
+fwrite(time_loc_df, "results/temporal_distribution/mutation_times.csv")
 
 # Get temporal distribution
-time_plots <- foreach(mutation = mutation_list) %do% {
-  date_df <- human %>%
-    filter(grepl(mutation, aa_substitutions)) %>%
-    mutate(collection_date = as.Date(collection_date, "%Y-%m-%d")) %>%
-    filter(!is.na(collection_date))
-  
-  plt <- date_df %>% 
-    ggplot(aes(y = loc2, x = collection_date, color = loc2)) +
-    geom_point() +
-    labs(x = "Sampling date", y = "Country", title = mutation) +
-    scale_x_date(breaks = seq(min(date_df$collection_date), 
-                              max(date_df$collection_date), 
-                              "months"),
-                 date_labels = "%b-%y")
-  
-  if (length(unique(date_df$loc2)) > 40) {
-    plt <- plt + theme(axis.text.y = element_blank(),
-                       axis.ticks.y = element_blank(),
-                       axis.text.x = element_text(angle = 45, hjust = 1),
-                       legend.position = "none")
-  } else {
-    plt <- plt +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1),
-            legend.position = "none")
-  }
-  
-  plt
-}
-
-combined <- ggpubr::ggarrange(plotlist = time_plots)
-ggsave("results/temporal_distribution_mutations.png", 
-       combined, 
-       dpi = 300,
-       width = 12, 
-       height = 10)
+# time_plots <- foreach(mutation = mutation_list) %do% {
+#   date_df <- human %>%
+#     filter(grepl(mutation, aa_substitutions)) %>%
+#     mutate(collection_date = as.Date(collection_date, "%Y-%m-%d")) %>%
+#     filter(!is.na(collection_date))
+#   
+#   plt <- date_df %>% 
+#     ggplot(aes(y = loc2, x = collection_date, color = loc2)) +
+#     geom_point() +
+#     labs(x = "Sampling date", y = "Country", title = mutation) +
+#     scale_x_date(breaks = seq(min(date_df$collection_date), 
+#                               max(date_df$collection_date), 
+#                               "months"),
+#                  date_labels = "%b-%y")
+#   
+#   if (length(unique(date_df$loc2)) > 40) {
+#     plt <- plt + theme(axis.text.y = element_blank(),
+#                        axis.ticks.y = element_blank(),
+#                        axis.text.x = element_text(angle = 45, hjust = 1),
+#                        legend.position = "none")
+#   } else {
+#     plt <- plt +
+#       theme(axis.text.x = element_text(angle = 45, hjust = 1),
+#             legend.position = "none")
+#   }
+#   
+#   plt
+# }
+# 
+# combined <- ggpubr::ggarrange(plotlist = time_plots)
+# ggsave("results/temporal_distribution_mutations.png", 
+#        combined, 
+#        dpi = 300,
+#        width = 12, 
+#        height = 10)
 # mink %>% 
 #   mutate(collection_date = as.Date(collection_date)) %>%
 #   summarise(earliest = min(collection_date, na.rm = T))

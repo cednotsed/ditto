@@ -5,26 +5,38 @@ require(data.table)
 require(ape)
 require(ggtree)
 require(homoplasyFinder)
-files <- list.files("data/alignments/", pattern = "aln.fasta")
-prefixes <- separate(tibble(x = files), x, into = c("prefixes"), sep = "\\.")$prefixes
+files <- list.files("data/alignments/all_animals/", pattern = "v8_masked.fasta")
+prefixes <- separate(tibble(x = files), x, into = c("prefix1", "prefix2"), sep = "\\.") %>%
+  mutate(prefix = paste0(prefix1, ".", prefix2))
+prefixes <- prefixes$prefix
 
-experiment_type <- "mini_animal_trees"
-prefixes <- list.files(str_glue("data/alignments/{experiment_type}"))
-prefixes <- prefixes[grepl(".aln.fasta", prefixes)]
-prefixes <- gsub(".audacity_only.v8_masked.aln.fasta", "", prefixes)
+# experiment_type <- "all_animals"
+# prefixes <- list.files(str_glue("data/alignments/{experiment_type}"))
+# prefixes <- prefixes[grepl(".aln.fasta", prefixes)]
+# prefixes <- gsub(".audacity_only.v8_masked.fasta", "", prefixes)
 
-for (prefix in prefixes) {
-  tree_path <- str_glue("data/trees/{experiment_type}/{prefix}.audacity_only.v8_masked.tree")
-  aln_path <- str_glue("data/alignments/{experiment_type}/{prefix}.audacity_only.v8_masked.aln.fasta")
+for (i in seq(length(files))) {
+  prefix <- prefixes[i]
+  tree_path <- str_glue("data/trees/all_animals/{prefix}.audacity_only.v8_masked-delim.fasta.contree")
+  aln_path <- str_glue("data/alignments/all_animals/{files[i]}")
   
+  # Remove ref
   tree <- read.tree(tree_path)
+  tree <- drop.tip(tree, "EPI_ISL_402124")
+  no_ref_path <- gsub(".contree", ".no_ref.contree", tree_path)
+  write.tree(tree, no_ref_path)
   
-  resdir <- paste0(getwd(), str_glue("/results/mini_animal_trees/homoplasy_out/{prefix}/"))
+  aln <- read.FASTA(aln_path)
+  aln <- aln[names(aln) != "EPI_ISL_402124"]
+  no_ref_aln_path <- gsub(".fasta", ".no_ref.fasta", aln_path)
+  write.FASTA(aln, no_ref_aln_path)
+  
+  resdir <- paste0(getwd(), str_glue("/results/homoplasy_out/{prefix}/"))
   dir.create(resdir)
   
   # Run the HomoplasyFinder jar tool
-  inconsistentPositions <- runHomoplasyFinderInJava(treeFile = tree_path, 
-                                                    fastaFile = aln_path, 
+  inconsistentPositions <- runHomoplasyFinderInJava(treeFile = no_ref_path,
+                                                    fastaFile = no_ref_aln_path,
                                                     path = resdir)
 }
 # Read in the output table

@@ -2,71 +2,79 @@ rm(list = ls())
 setwd("../Desktop/git_repos/ditto/")
 require(data.table)
 require(tidyverse)
-require(ape)
-require(foreach)
 
 # Load metadata
-audacity <- fread("data/GISAID-hCoV-19-phylogeny-2021-11-16/metadata.csv")
-
-all_meta <- fread("data/metadata/all_sequence_metadata_231121.tsv") %>% 
-  rename_all(~ tolower(gsub(" ", "_", .))) %>%
-  filter(accession_id %in% audacity$accession_id) %>%
-  separate(location, into = c("loc1", "loc2", "loc3"), sep = " / ") %>%
-  mutate(location = paste0(loc1, " / ", loc2))
-
-mink_deer <- all_meta %>%
-  filter(host %in% c("Neovison vison", "Odocoileus virginianus")) %>%
+mink <- fread("data/metadata/all_animals/mink_only.n929.csv")
+deer <- fread("data/metadata/all_animals/deer_only.n96.csv")
+mink_deer <- bind_rows(mink, deer) %>%
+  filter(host != "Human") %>%
   mutate(host_name = ifelse(host == "Neovison vison", "mink", "deer"))
 
-cluster_stats <- mink_deer %>%
-  group_by(host, host_name, loc2, pango_lineage) %>%
-  summarise(n = n())
-
-locs <- unique(cluster_stats$loc2)
-
-morsels <- foreach (loc = locs) %do% {
-    cluster_temp <- cluster_stats %>% 
-      filter(loc2 == loc)
-    
-    cluster_temp %>%
-      add_column(cluster_num = seq(nrow(cluster_temp))) %>%
-      mutate(cluster = str_glue("{host_name}_{loc2}_{cluster_num}"))
-}  
-
-merged <- bind_rows(morsels)
-fwrite(merged, "results/cluster_annotation/deer_mink_raw_clusters.csv")
-
 ## After manual inspection ##
-deer_cluster <- fread("results/cluster_annotation/deer_clusters.csv") %>%
-  mutate(cluster2 = paste0("deer_USA_", cluster)) %>%
-  separate(accession_id, into = c("accession_id", NA), sep = "\\|") %>%
-  select(-cluster)
+raw_clusters <- fread("results/cluster_annotation/deer_mink_raw_clusters.csv") %>%
+  select(-n, -cluster_num, -host_name)
+
+# Utah clusters
+utah_a <- as.vector(t(read.table("results/cluster_annotation/mink_utah_A.txt")))
+utah_a <- str_split(utah_a, "\\|", simplify = T)[, 1]
+utah_b <- as.vector(t(read.table("results/cluster_annotation/mink_utah_B.txt")))
+utah_b <- str_split(utah_b, "\\|", simplify = T)[, 1]
 
 parsed_meta <- mink_deer %>%
-  left_join(merged, by = c("loc2", "host", "pango_lineage")) %>%
-  left_join(deer_cluster) %>%
-  # For mink
-  mutate(cluster = case_when(cluster %in% c("mink_Denmark_8", "mink_Denmark_6") ~ "mink_Denmark_1",
-                             cluster == "mink_Denmark_7" ~ "mink_Denmark_6",
-                             accession_id %in% c("EPI_ISL_447629", "EPI_ISL_447630", "EPI_ISL_523075",
-                                                 "EPI_ISL_447632", "EPI_ISL_447628", "EPI_ISL_523085",
-                                                 "EPI_ISL_523070") ~ "mink_Netherlands_7",
-                             accession_id %in% c("EPI_ISL_984307", "EPI_ISL_984305") ~ "mink_Poland_1",
-                             cluster %in% c("mink_USA_3", "mink_USA_4") ~ "mink_USA_1",
-                             accession_id %in% c("EPI_ISL_2896210", "EPI_ISL_2896209", "EPI_ISL_2834937",
-                                                 "EPI_ISL_2834938", "EPI_ISL_2896205", "EPI_ISL_2896204",
-                                                 "EPI_ISL_2896206", "EPI_ISL_2896207", "EPI_ISL_2896208",
-                                                 "EPI_ISL_2896203") ~ "mink_Netherlands_7",
-                             TRUE ~ as.character(cluster))) %>%
-  mutate(cluster = ifelse(accession_id %in% c("EPI_ISL_683023", "EPI_ISL_683024", "EPI_ISL_683025",
-                                              "EPI_ISL_641422", "EPI_ISL_641423", "EPI_ISL_683005",
-                                              "EPI_ISL_641421", "EPI_ISL_683010", "EPI_ISL_683009"), 
-                          "mink_Denmark_7", cluster)) %>%
-  # For deer
-  mutate(cluster = ifelse(accession_id %in% deer_cluster$accession_id, cluster2, cluster)) %>%
-  select(accession_id, pango_lineage, host, cluster)
+  left_join(raw_clusters, by = c("loc2", "host", "pango_lineage")) %>%
+  rename(raw_clusters = cluster) %>%
+  ## For mink ##
+  mutate(cluster = case_when(
+                             # Denmark 
+                             raw_clusters %in% c("mink_Denmark_5") ~ "mink_Denmark_1",
+                             raw_clusters %in% c("mink_Denmark_7") ~ "mink_Denmark_5",
+                             # Poland
+                             raw_clusters %in% c("mink_Poland_2", "mink_Poland_5") ~ "mink_Poland_1",
+                             raw_clusters %in% c("mink_Poland_3", "mink_Poland_4") ~ "mink_Poland_2",
+                             # USA
+                             accession_id %in% utah_a ~ "mink_USA_1",
+                             accession_id %in% utah_b ~ "mink_USA_2",
+                             host_name == "mink" & loc3 == "Wisconsin" ~ "mink_USA_3",
+                             host_name == "mink" & loc3 == "Michigan" ~ "mink_USA_4",
+                             host_name == "mink" & loc3 == "Wisconsin" ~ "mink_USA_5",
+                             host_name == "mink" & loc3 == "Oregon" ~ "mink_USA_6",
+                             # France
+                             raw_clusters %in% c("mink_France_2") ~ "mink_France_1",
+                             # Netherlands
+                             raw_clusters %in% c("mink_Netherlands_2", "mink_Netherlands_5") ~ "mink_Netherlands_2",
+                             raw_clusters == "mink_Netherlands_4" ~ "mink_Netherlands_3",
+                             raw_clusters == "mink_Netherlands_6" ~ "mink_Netherlands_4",
+                             TRUE ~ as.character(raw_clusters))) %>%
+  # Others
+  mutate(cluster = ifelse(accession_id %in% c("EPI_ISL_641423", "EPI_ISL_683009", "EPI_ISL_683010"), "mink_Denmark_5", cluster),
+         cluster = ifelse(raw_clusters %in% c("mink_Netherlands_3", "mink_Belarus_1", "mink_Denmark_6"), "Unassigned", cluster),
+         cluster = ifelse(accession_id %in% c("EPI_ISL_3218557"), "Unassigned", cluster),
+         cluster = ifelse(accession_id %in% c("EPI_ISL_626344", "EPI_ISL_626340", "EPI_ISL_626341", 
+                                              "EPI_ISL_626348", "EPI_ISL_626346", "EPI_ISL_626345", 
+                                              "EPI_ISL_626347", "EPI_ISL_626350", "EPI_ISL_626342", 
+                                              "EPI_ISL_626351", "EPI_ISL_626349", "EPI_ISL_626343"), "Unassigned", cluster)) %>%
+  ## For Deer ##
+  mutate(cluster = case_when(
+         host_name == "mink" ~ cluster,
+         raw_clusters %in% c("deer_USA_21") ~ "deer_USA_1",
+         raw_clusters %in% c("deer_USA_17", "deer_USA_24") ~ "deer_USA_2",
+         accession_id == "EPI_ISL_5804748" ~ "deer_USA_2",
+         raw_clusters %in% c("deer_USA_20") ~ "deer_USA_3",
+         raw_clusters %in% c("deer_USA_18") ~ "deer_USA_4",
+         raw_clusters %in% c("deer_USA_22", "deer_USA_23") ~ "deer_USA_7",
+         grepl("_14|_10|_12|_11|_7|_9|_13|_15|_8", raw_clusters) ~ "deer_USA_8",
+         TRUE ~ as.character(NA))) %>%
+  mutate(cluster = ifelse(accession_id %in% c("EPI_ISL_5804740", "EPI_ISL_5804741", "EPI_ISL_5804737",
+                                              "EPI_ISL_5804738", "EPI_ISL_5804739"), "deer_USA_5", cluster),
+         cluster = ifelse(accession_id %in% c("EPI_ISL_5804735", "EPI_ISL_5804736", "EPI_ISL_5804730",
+                                              "EPI_ISL_5804729"), "Unassigned", cluster)) %>%
+  select(accession_id, pango_lineage, host, raw_clusters, cluster)
 
 fwrite(parsed_meta, "results/cluster_annotation/deer_mink_parsed_clusters.csv")
 
-
-
+# mink_deer %>%
+#   left_join(raw_clusters, by = c("loc2", "host", "pango_lineage")) %>%
+#   rename(raw_clusters = cluster)
+# 
+  parsed_meta %>%
+  filter(accession_id == "EPI_ISL_3218557")

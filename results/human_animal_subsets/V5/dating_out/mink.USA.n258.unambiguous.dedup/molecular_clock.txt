@@ -1,5 +1,0 @@
-Root-Tip-Regression:
- --rate:	2.283e-04 +/- 7.81e-05 (one std-dev)
- --chi^2:	7618.59
- --r^2:  	0.06
-

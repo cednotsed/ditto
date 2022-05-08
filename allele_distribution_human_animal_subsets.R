@@ -8,16 +8,13 @@ require(ggtreeExtra)
 require(ggnewscale)
 require(jcolors)
 
-# prefix <- "all_mink.n1487"
+# prefix <- "all_mink.n1769"
 # host_name <- "mink"
-prefix <- "all_deer.n145"
+prefix <- "all_deer.n189"
 host_name <- "deer"
 tree <- read.tree(str_glue("data/trees/human_animal_subsets/V5/{prefix}.audacity_only.v8_masked.unambiguous.dedup.tree"))
 
-animal_meta <- fread(str_glue("data/metadata/human_animal_subsets/V5/{prefix}.csv")) %>%
-  separate(location, into = c("loc1", "loc2"), sep = " / ") %>%
-  mutate(location = paste0(loc2)) %>%
-  select(accession_id, host, clade, pango_lineage, location, -cluster)
+animal_meta <- fread(str_glue("data/metadata/human_animal_subsets/V5/{prefix}.csv"))
 
 cluster_meta <- fread("results/cluster_annotation/deer_mink_parsed_clusters.csv") %>%
   select(accession_id, cluster)
@@ -28,12 +25,12 @@ aln <- read.dna(str_glue("data/alignments/human_animal_subsets/V5/{prefix}.audac
                 format = "fasta",
                 as.matrix = T)
 
-mut_df <- fread(str_glue("results/{host_name}_homoplasy_alele_frequency_V5.csv")) %>%
-  filter(mutation_annot %in% c("G37E","F486L", "N501T", "T229I", "L219V", "D178Y", "A192V", "I258V",
-                               "T18A", "N507I", "D377Y", "I82T", "L1035F",
-                               "Y453F", "H182Y", "P199L", 
-                               # syn changes
-                               "P181P", "I1528I", "I292I", "L45L"))
+mut_df <- fread(str_glue("results/allele_frequency/{host_name}_homoplasy_alele_frequency_V5.csv"))
+  # filter(mutation_annot %in% c("G37E","F486L", "N501T", "T229I", "L219V", "D178Y", "A192V", "I258V",
+  #                              "T18A", "N507I", "D377Y", "I82T", "L1035F",
+  #                              "Y453F", "H182Y", "P199L", 
+  #                              # syn changes
+  #                              "P181P", "I1528I", "I292I", "L45L"))
 mut_df
 
 df %>%
@@ -95,9 +92,9 @@ for (i in seq(nrow(mut_df))) {
   #        dpi = 600,
   #        width = 10,
   #        height = 10)
-  ggsave(str_glue("results/all_animals/founder_alleles/{prefix}_allele_{row$mutation_annot}_annotation.png"),
+  ggsave(str_glue("results/founder_alleles/founder_trees/{host_name}/{prefix}_allele_{row$mutation_annot}_annotation.png"),
          plot = p,
-         dpi = 600,
+         dpi = 100,
          width = 10,
          height = 10)
   

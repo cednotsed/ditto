@@ -8,12 +8,10 @@ require(ggtreeExtra)
 require(ggnewscale)
 require(jcolors)
 
-prefix <- "denmark_minks.n15879"
+prefix <- "denmark_minks.n15895"
 host_name <- "mink"
-# prefix <- "all_deer.n145"
-# host_name <- "deer"
-audacity <- read.tree(str_glue("data/GISAID-hCoV-19-phylogeny-2021-11-16/global.tree"))
 
+audacity <- read.tree(str_glue("data/GISAID-hCoV-19-phylogeny-2022-02-21/global.tree"))
 animal_meta <- fread(str_glue("data/metadata/human_animal_subsets/V6/{prefix}.csv"))
 
 # Drop tips
@@ -24,7 +22,7 @@ aln <- read.dna(str_glue("data/alignments/human_animal_subsets/V6/{prefix}.audac
                 format = "fasta",
                 as.matrix = T)
 
-mut_df <- fread(str_glue("results/{host_name}_homoplasy_alele_frequency_V5.csv")) %>%
+mut_df <- fread(str_glue("results/allele_frequency/{host_name}_homoplasy_alele_frequency_V5.csv")) %>%
   filter(mutation_annot %in% c("Y453F"))
 mut_df
 
@@ -53,9 +51,10 @@ for (i in seq(nrow(mut_df))) {
                    allele = animal_parsed$allele_annot)
   
   # Plot tree
-  p <- ggtree(audacity_filt, aes(color = host)) %<+% dd +
-    geom_tippoint(aes(shape = host)) +
-    labs(shape = "Host", color = "host") +
+  p <- ggtree(audacity_filt, color = "grey61") %<+% dd +
+    geom_tippoint(aes(color = host, shape = host)) +
+    scale_shape_discrete(na.translate = F) +
+    labs(shape = "Host", color = "Host") +
     new_scale_color() +
     geom_fruit(geom = geom_tile, aes(fill = cluster), width=10, offset=0, alpha = 1) +
     scale_fill_jcolors("pal8", na.translate = F) +
@@ -85,11 +84,10 @@ for (i in seq(nrow(mut_df))) {
   #        dpi = 600,
   #        width = 10,
   #        height = 10)
-  ggsave(str_glue("results/all_animals/founder_alleles/{prefix}_allele_{row$mutation_annot}_annotation.png"),
+  ggsave(str_glue("results/founder_alleles/{prefix}_allele_{row$mutation_annot}_annotation.png"),
          plot = p,
          dpi = 600,
          width = 8,
-         height = 10)
   
 }
 

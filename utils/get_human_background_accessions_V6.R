@@ -11,21 +11,25 @@ registerDoParallel(cores=8)
 hosts <- c("Neovison vison", "Odocoileus virginianus")
 
 # Load metadata
-audacity <- fread("data/GISAID-hCoV-19-phylogeny-2021-11-16/metadata.csv")
-
-all_meta <- fread("data/metadata/all_sequence_metadata_231121.tsv") %>% 
-  rename_all(~ tolower(gsub(" ", "_", .))) %>%
-  filter(accession_id %in% audacity$accession_id) %>%
-  separate(location, into = c("loc1", "loc2", "loc3"), sep = " / ") %>%
-  mutate(location = paste0(loc1, " / ", loc2),
-         collection_date = as.Date(collection_date)) %>%
-  as_tibble()
+all_meta <- fread("data/metadata/all_sequence_metadata_260322.audacity.parsed.tsv") %>%
+  mutate(collection_date = as.Date(collection_date))
 
 animal_filt <- all_meta %>% 
   filter(host %in% hosts)
 
 animal_all <- all_meta %>% 
-  filter(host != "Human")
+  filter(!(host %in% c("Human", "Environment"))) %>%
+  mutate(host = ifelse(grepl("Panthera", host), "Panthera spp.", host))
+
+animal_stats_filt <- animal_all %>%
+  group_by(host) %>%
+  summarise(n = n()) %>%
+  filter(n > 10)
+
+animal_stats
+
+animal_all <- animal_all %>%
+  filter(host %in% animal_stats_filt$host)
 
 # Print no. of isolates per country
 country_stats <- animal_filt %>%
